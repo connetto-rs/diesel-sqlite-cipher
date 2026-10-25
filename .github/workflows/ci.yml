@@ -73,12 +73,6 @@ jobs:
           mkdir -p "$(dirname "$COVERAGE_FILE")"
           cargo +nightly llvm-cov --release -p diesel-sqlite-cipher --all-targets --no-report
           cargo +nightly llvm-cov --release -p diesel-sqlite-cipher --doc --no-clean --lcov --output-path "$COVERAGE_FILE"
-      - name: Retain coverage report
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: coverage-${{ env.DIESEL_SQLITE_CIPHER_TEST_CODEC }}
-          path: ${{ env.COVERAGE_FILE }}
-          if-no-files-found: error
       - name: Upload coverage to Codecov
         if: >-
           github.actor != 'dependabot[bot]' &&
@@ -137,12 +131,6 @@ jobs:
           mkdir -p "$(dirname "$COVERAGE_FILE")"
           cargo +nightly llvm-cov --release -p diesel-sqlite-cipher --all-targets --no-report
           cargo +nightly llvm-cov --release -p diesel-sqlite-cipher --doc --no-clean --lcov --output-path "$COVERAGE_FILE"
-      - name: Retain coverage report
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: coverage-${{ env.DIESEL_SQLITE_CIPHER_TEST_CODEC }}
-          path: ${{ env.COVERAGE_FILE }}
-          if-no-files-found: error
       - name: Upload coverage to Codecov
         if: >-
           github.actor != 'dependabot[bot]' &&
@@ -156,62 +144,6 @@ jobs:
           flags: ${{ env.DIESEL_SQLITE_CIPHER_TEST_CODEC }}
           disable_search: true
           fail_ci_if_error: true
-  sonar:
-    needs: [test, sqlcipher]
-    if: >-
-      github.actor != 'dependabot[bot]' &&
-      github.event.pull_request.user.login != 'dependabot[bot]' &&
-      ((github.event_name == 'push' &&
-      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) ||
-      (github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.base.ref == github.event.repository.default_branch))
-    runs-on: ubuntu-26.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-      - name: Check main-branch baseline
-        id: baseline
-        if: github.event_name == 'pull_request'
-        env:
-          MAIN_BRANCH: ${{ github.event.repository.default_branch }}
-        run: |
-          project_key=$(grep '^sonar.projectKey=' sonar-project.properties)
-          project_key=${project_key#sonar.projectKey=}
-          host_url=$(grep '^sonar.host.url=' sonar-project.properties)
-          host_url=${host_url#sonar.host.url=}
-          response=$(curl --fail --silent --show-error --connect-timeout 5 --max-time 30 \
-            --get --data-urlencode "project=$project_key" \
-            --data-urlencode "branch=$MAIN_BRANCH" --data-urlencode 'ps=1' \
-            "$host_url/api/project_analyses/search")
-          ready=$(jq -r '.analyses | length > 0' <<< "$response")
-          echo "ready=$ready" >> "$GITHUB_OUTPUT"
-          if [ "$ready" = false ]; then
-            echo "::notice::Sonar PR analysis waits for the main-branch baseline."
-          fi
-      - name: Install analysis tools
-        if: github.event_name == 'push' || steps.baseline.outputs.ready == 'true'
-        run: |
-          sudo apt-get update && sudo apt-get install -y lcov
-          rustup toolchain install stable --profile minimal
-      - name: Download coverage reports
-        if: github.event_name == 'push' || steps.baseline.outputs.ready == 'true'
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          pattern: coverage-*
-          path: target/coverage
-          merge-multiple: true
-      - name: Merge coverage reports
-        if: github.event_name == 'push' || steps.baseline.outputs.ready == 'true'
-        run: lcov --add-tracefile 'target/coverage/*.lcov' --output-file target/coverage.lcov
-      - name: Analyze with Sonar
-        if: github.event_name == 'push' || steps.baseline.outputs.ready == 'true'
-        uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   msrv:
     runs-on: ubuntu-26.04

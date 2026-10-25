@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/connetto-rs/diesel-sqlite-cipher/actions/workflows/ci.yml/badge.svg)](https://github.com/connetto-rs/diesel-sqlite-cipher/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/connetto-rs/diesel-sqlite-cipher/graph/badge.svg)](https://codecov.io/gh/connetto-rs/diesel-sqlite-cipher)
-[![Quality gate](https://sonarcloud.io/api/project_badges/measure?project=LucaCappelletti94_diesel-sqlite-cipher&metric=alert_status)](https://sonarcloud.io/project/overview?id=LucaCappelletti94_diesel-sqlite-cipher)
 [![Mutation testing](https://img.shields.io/badge/mutation%20testing-cargo--mutants-blue)](https://mutants.rs/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/connetto-rs/diesel-sqlite-cipher/blob/main/LICENSE)
 
